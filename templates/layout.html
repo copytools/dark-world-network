@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="UTF-8">
+  <title>DARK WORLD NETWORK</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header>
+    <h1>🌐 DARK WORLD NETWORK</h1>
+    <nav>
+      <a href="/">Home</a> |
+      <a href="/upload">Upload</a>
+      <button id="theme-toggle">🌓 Theme</button>
+    </nav>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle.addEventListener('click', () => {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : current === 'light' ? 'default' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+  </script>
+</body>
+</html>

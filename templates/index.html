@@ -1,0 +1,26 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>📂 Files</h2>
+<form method="GET" class="search-bar">
+  <input type="text" name="search" placeholder="Search...">
+  <select name="filter">
+    <option value="">All Categories</option>
+    <option value="movie">Movie</option>
+    <option value="music">Music</option>
+    <option value="app">App</option>
+    <option value="tutorial">Tutorial</option>
+    <option value="photo">Photo</option>
+  </select>
+  <button type="submit">Search</button>
+</form>
+
+<ul class="file-list">
+  {% for file in files %}
+    <li>
+      <strong>{{ file[1] }}</strong> <small>[{{ file[2] }}]</small><br>
+      <em>{{ file[3] }}</em><br>
+      <a href="/download/{{ file[0] }}">⬇ Download</a> ({{ file[5] }} downloads)
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}
