@@ -13,3 +13,7 @@ uploads/
 
 # Environment variables
 .env
+
+*.db
+__pycache__/
+.env
