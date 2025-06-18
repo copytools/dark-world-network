@@ -1,34 +1,62 @@
-```html
-{% extends 'layout.html' %}
+<!-- File: templates/index.html -->
+{% extends "layout.html" %}
 {% block content %}
-<div class="main-section">
-  <h1 class="site-title">DARK WORLD NETWORK</h1>
-  <form method="get" class="search-form">
-    <input type="text" name="search" placeholder="Search by name" value="{{ request.args.get('search', '') }}">
-    <select name="filter">
-      <option value="">All Categories</option>
-      <option value="Movie">Movie</option>
-      <option value="App">App</option>
-      <option value="Music">Music</option>
-    </select>
-    <button type="submit">Search</button>
-  </form>
-
-  <div class="file-grid">
-    {% for file in files %}
-    <div class="file-card">
-      <div class="file-thumbnail">
-        <img src="{{ url_for('static', filename='img/file.png') }}" alt="File">
-      </div>
-      <div class="file-info">
-        <h3>{{ file[1] }}</h3>
-        <p>{{ file[3] }}</p>
-        <p><strong>Downloads:</strong> {{ file[5] }}</p>
-        <a href="/download/{{ file[0] }}" class="download-btn">Download</a>
-      </div>
+<div class="menu-bar">
+  <button id="menuToggle">MENU</button>
+  <div id="sideMenu" class="side-menu">
+    <div class="menu-top">
+      <label class="theme-switch">
+        Thame
+        <input type="checkbox" id="themeToggle">
+      </label>
     </div>
+    <ul class="category-list">
+      <li><a href="/">All Categories</a></li>
+      <li><a href="/category/logo">Logo</a></li>
+      <li><a href="/category/software">Software</a></li>
+      <li><a href="/category/movie">Movie</a></li>
+      <li><a href="/category/music">Music</a></li>
+      <li><a href="/category/apk">App APK</a></li>
+      <li><a href="/category/tutorial">Tutorial</a></li>
+      <li><a href="/category/photo">Photo</a></li>
+    </ul>
+    <div class="support-section">
+      <a href="https://t.me/darkworldnetwork" target="_blank" class="telegram-btn">Join Telegram</a>
+      <a href="https://facebook.com/darkworldnetwork" target="_blank" class="facebook-btn">Facebook Page</a>
+      <a href="/support" class="support-link">Support</a>
+    </div>
+  </div>
+</div>
+
+<div class="home-page">
+  <h1>DARK WORLD NETWORK</h1>
+  <div class="banner">
+    <img src="/static/images/banner.jpg" alt="Banner">
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search...">
+  </div>
+
+  <div class="category-icons">
+    <a href="/category/apk"><img src="/static/icons/apk.png" alt="APK"><span>APK</span></a>
+    <a href="/category/movies"><img src="/static/icons/movies.png" alt="Movies"><span>Movies</span></a>
+    <a href="/category/video"><img src="/static/icons/video.png" alt="Video"><span>Video</span></a>
+    <a href="/category/music"><img src="/static/icons/music.png" alt="Music"><span>Music</span></a>
+    <a href="/category/logo"><img src="/static/icons/logo.png" alt="Logo"><span>Logo</span></a>
+    <a href="/category/tutorial"><img src="/static/icons/tutorial.png" alt="Tutorial"><span>Tutorial</span></a>
+  </div>
+
+  <div class="download-items">
+    {% for file in files %}
+      <div class="download-item">
+        <img src="/uploads/{{ file.logo }}" alt="{{ file.name }}">
+        <div>
+          <p class="file-name">{{ file.name }}</p>
+          <a href="/download/{{ file.id }}" class="download-btn">Download</a>
+        </div>
+      </div>
     {% endfor %}
   </div>
 </div>
 {% endblock %}
-```
