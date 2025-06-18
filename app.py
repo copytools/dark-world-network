@@ -3,59 +3,122 @@ import os
 import sqlite3
 from werkzeug.utils import secure_filename
 
-app = Flask(name) app.secret_key = 'darkworldsupersecretkey'
+app = Flask(__name__)
+app.secret_key = 'darkworldsupersecretkey'
 
-UPLOAD_FOLDER = 'uploads' ALLOWED_EXTENSIONS = {'zip', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mp3', 'apk', 'exe'} app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'zip', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mp3'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-ADMIN_USERNAME = 'admin' ADMIN_PASSWORD = '12345'
+# Check if file extension is allowed
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def allowed_file(filename): return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# Create DB table if not exists
+def init_db():
+    conn = sqlite3.connect('file.db')
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS files (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT,
+            category TEXT,
+            description TEXT,
+            downloads INTEGER DEFAULT 0
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
-@app.route("/") def index(): search = request.args.get('search') category = request.args.get('filter')
+init_db()
 
-conn = sqlite3.connect('file.db')
-c = conn.cursor()
+@app.route('/')
+def index():
+    conn = sqlite3.connect('file.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM files ORDER BY id DESC')
+    files = c.fetchall()
+    conn.close()
+    return render_template('index.html', files=files)
 
-query = "SELECT * FROM files WHERE 1=1"
-params = []
+@app.route('/upload', methods=['GET', 'POST'])
+def upload():
+    if 'username' not in session:
+        return redirect(url_for('login'))
 
-if search:
-    query += " AND name LIKE ?"
-    params.append(f"%{search}%")
-if category:
-    query += " AND category = ?"
-    params.append(category)
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            category = request.form.get('category')
+            description = request.form.get('description')
 
-c.execute(query, params)
-files = c.fetchall()
-conn.close()
-return render_template("index.html", files=files)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
 
-@app.route('/login', methods=['GET', 'POST']) def login(): if request.method == 'POST': user = request.form['username'] pw = request.form['password'] if user == ADMIN_USERNAME and pw == ADMIN_PASSWORD: session['logged_in'] = True return redirect('/upload') else: flash('Invalid credentials') return render_template('login.html')
+            conn = sqlite3.connect('file.db')
+            c = conn.cursor()
+            c.execute('INSERT INTO files (filename, category, description) VALUES (?, ?, ?)',
+                      (filename, category, description))
+            conn.commit()
+            conn.close()
 
-@app.route('/logout') def logout(): session.pop('logged_in', None) return redirect('/')
+            flash('File uploaded successfully!')
+            return redirect(url_for('index'))
 
-@app.route('/upload', methods=['GET', 'POST']) def upload_file(): if not session.get('logged_in'): return redirect('/login')
+    return render_template('upload.html')
 
-if request.method == 'POST':
-    file = request.files['file']
-    category = request.form['category']
-    desc = request.form['description']
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        conn = sqlite3.connect('file.db')
-        c = conn.cursor()
-        c.execute("INSERT INTO files (name, category, description, filename, downloads) VALUES (?, ?, ?, ?, 0)",
-                  (filename, category, desc, filename))
+@app.route('/download/<int:file_id>')
+def download(file_id):
+    conn = sqlite3.connect('file.db')
+    c = conn.cursor()
+    c.execute('SELECT filename FROM files WHERE id = ?', (file_id,))
+    result = c.fetchone()
+    if result:
+        filename = result[0]
+        c.execute('UPDATE files SET downloads = downloads + 1 WHERE id = ?', (file_id,))
         conn.commit()
         conn.close()
-        flash('File uploaded successfully!')
-        return redirect('/')
-return render_template('upload.html')
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+    else:
+        conn.close()
+        flash('File not found')
+        return redirect(url_for('index'))
 
-@app.route('/download/int:file_id') def download(file_id): conn = sqlite3.connect('file.db') c = conn.cursor() c.execute("SELECT * FROM files WHERE id=?", (file_id,)) file = c.fetchone() if file: filename = file[4] c.execute("UPDATE files SET downloads = downloads + 1 WHERE id=?", (file_id,)) conn.commit() conn.close() return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True) return "File not found", 404
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        # simple admin login system
+        if username == 'admin' and password == 'dark123':
+            session['username'] = username
+            return redirect(url_for('upload'))
+        else:
+            flash('Invalid credentials')
+            return redirect(url_for('login'))
+    return render_template('login.html')
 
-if name == 'main': if not os.path.exists('uploads'): os.makedirs('uploads') app.run(debug=True)
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('index'))
 
+@app.route('/filter')
+def filter_category():
+    category = request.args.get('category')
+    conn = sqlite3.connect('file.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM files WHERE category = ? ORDER BY id DESC', (category,))
+    files = c.fetchall()
+    conn.close()
+    return render_template('index.html', files=files)
+
+if __name__ == '__main__':
+    app.run(debug=True)
