@@ -1,4 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, session import os import sqlite3 from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, session
+import os
+import sqlite3
+from werkzeug.utils import secure_filename
 
 app = Flask(name) app.secret_key = 'darkworldsupersecretkey'
 
