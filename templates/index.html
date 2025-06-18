@@ -1,67 +1,36 @@
-<!DOCTYPE html><html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DARK WORLD NETWORK</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body class="default-mode">
-    <header>
-        <h1>DARK WORLD NETWORK</h1>
-        <nav>
-            <form action="/" method="get" class="search-bar">
-                <input type="text" name="search" placeholder="Search files..." value="{{ request.args.get('search', '') }}">
-                <select name="filter">
-                    <option value="">All Categories</option>
-                    <option value="app" {% if request.args.get('filter') == 'app' %}selected{% endif %}>App</option>
-                    <option value="software" {% if request.args.get('filter') == 'software' %}selected{% endif %}>Software</option>
-                    <option value="image" {% if request.args.get('filter') == 'image' %}selected{% endif %}>Image</option>
-                    <option value="video" {% if request.args.get('filter') == 'video' %}selected{% endif %}>Video</option>
-                    <option value="document" {% if request.args.get('filter') == 'document' %}selected{% endif %}>Document</option>
-                </select>
-                <button type="submit">Search</button>
-            </form>
-        </nav>
-    </header><main>
-    {% if files %}
-    <div class="file-list">
-        {% for file in files %}
-        <div class="file-item">
-            <div class="file-name">📄 {{ file[1] }}</div>
-            <div class="file-category">Category: {{ file[2] }}</div>
-            <div class="file-description">{{ file[3] }}</div>
-            <div class="file-actions">
-                <a href="{{ url_for('download', file_id=file[0]) }}" class="download-btn">⬇ Download</a>
-                <span class="downloads">{{ file[5] }} downloads</span>
-            </div>
-        </div>
-        {% endfor %}
+**✅ File: templates/index.html — Replace your existing `index.html` with this:**
+
+```html
+{% extends 'layout.html' %}
+{% block content %}
+<div class="main-section">
+  <h1 class="site-title">DARK WORLD NETWORK</h1>
+  <form method="get" class="search-form">
+    <input type="text" name="search" placeholder="Search by name" value="{{ request.args.get('search', '') }}">
+    <select name="filter">
+      <option value="">All Categories</option>
+      <option value="Movie">Movie</option>
+      <option value="App">App</option>
+      <option value="Music">Music</option>
+    </select>
+    <button type="submit">Search</button>
+  </form>
+
+  <div class="file-grid">
+    {% for file in files %}
+    <div class="file-card">
+      <div class="file-thumbnail">
+        <img src="{{ url_for('static', filename='img/file.png') }}" alt="File">
+      </div>
+      <div class="file-info">
+        <h3>{{ file[1] }}</h3>
+        <p>{{ file[3] }}</p>
+        <p><strong>Downloads:</strong> {{ file[5] }}</p>
+        <a href="/download/{{ file[0] }}" class="download-btn">Download</a>
+      </div>
     </div>
-    {% else %}
-    <p class="no-files">No files found.</p>
-    {% endif %}
-</main>
-
-<footer>
-    <p>&copy; 2025 DARK WORLD NETWORK</p>
-    <div class="theme-toggle">
-        <button onclick="setTheme('default')">Default</button>
-        <button onclick="setTheme('light')">Light</button>
-        <button onclick="setTheme('dark')">Dark</button>
-    </div>
-</footer>
-
-<script>
-    function setTheme(mode) {
-        document.body.className = mode + '-mode';
-        localStorage.setItem('theme', mode);
-    }
-
-    window.onload = () => {
-        const savedTheme = localStorage.getItem('theme') || 'default';
-        document.body.className = savedTheme + '-mode';
-    };
-</script>
-
-</body>
-</html>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+```
